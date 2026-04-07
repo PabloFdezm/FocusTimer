@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FocusTimer">
+    <meta name="theme-color" content="#0a0a0a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/svg+xml" href="icon-192.svg">
+    <title>FocusTimer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Tab: Temporizador -->
+    <main id="tab-timer" class="tab-content active">
+        <h1 class="tab-title">Temporizador</h1>
+
+        <div class="mode-toggle">
+            <button class="mode-btn active" data-mode="pomodoro">Pomodoro</button>
+            <button class="mode-btn" data-mode="libre">Cronómetro</button>
+        </div>
+
+        <!-- Pomodoro Ring -->
+        <div id="timer-display" class="timer-display">
+            <svg id="ring-svg" class="ring" viewBox="0 0 200 200">
+                <circle class="ring-bg" cx="100" cy="100" r="88" />
+                <circle id="ring-progress" class="ring-fg" cx="100" cy="100" r="88"
+                    stroke-dasharray="553" stroke-dashoffset="0" />
+            </svg>
+            <div class="timer-center">
+                <span id="timer-time" class="timer-time">25:00</span>
+                <span id="timer-label" class="timer-label">Listo</span>
+            </div>
+        </div>
+
+        <!-- Pomodoro dots -->
+        <div id="pomodoro-dots" class="pomodoro-dots">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
+
+        <!-- Category selector -->
+        <button id="btn-category" class="category-chip">
+            <span id="cat-dot" class="cat-dot"></span>
+            <span id="cat-name">Sin categoría</span>
+        </button>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button id="btn-stop" class="ctrl-btn ctrl-secondary hidden">
+                <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+            </button>
+            <button id="btn-play" class="ctrl-btn ctrl-primary">
+                <svg id="icon-play" viewBox="0 0 24 24"><polygon points="8,5 20,12 8,19"/></svg>
+                <svg id="icon-pause" viewBox="0 0 24 24" class="hidden"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+            </button>
+            <button id="btn-reset" class="ctrl-btn ctrl-secondary hidden">
+                <svg viewBox="0 0 24 24"><path d="M3.5 2v6h6M3.7 8A9 9 0 1 1 3 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+    </main>
+
+    <!-- Tab: Calendario -->
+    <main id="tab-calendar" class="tab-content">
+        <h1 class="tab-title">Calendario</h1>
+        <div class="cal-header">
+            <button id="cal-prev" class="cal-nav">&lt;</button>
+            <span id="cal-month" class="cal-month"></span>
+            <button id="cal-next" class="cal-nav">&gt;</button>
+        </div>
+        <div class="cal-weekdays">
+            <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
+        </div>
+        <div id="cal-grid" class="cal-grid"></div>
+
+        <!-- Day detail modal -->
+        <div id="day-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modal-date"></h2>
+                    <button id="modal-close" class="modal-close">&times;</button>
+                </div>
+                <div id="modal-summary" class="modal-summary"></div>
+                <div id="modal-sessions" class="modal-sessions"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Tab: Estadísticas -->
+    <main id="tab-stats" class="tab-content">
+        <h1 class="tab-title">Estadísticas</h1>
+        <div class="mode-toggle">
+            <button class="period-btn active" data-period="hoy">Hoy</button>
+            <button class="period-btn" data-period="semana">Semana</button>
+            <button class="period-btn" data-period="mes">Mes</button>
+        </div>
+        <div class="stats-cards">
+            <div class="stat-card">
+                <span id="stat-time" class="stat-value">0m</span>
+                <span class="stat-label">Tiempo total</span>
+            </div>
+            <div class="stat-card">
+                <span id="stat-sessions" class="stat-value">0</span>
+                <span class="stat-label">Sesiones</span>
+            </div>
+        </div>
+        <h3 class="section-title">Por categoría</h3>
+        <div id="stats-breakdown" class="stats-breakdown"></div>
+        <button id="btn-manage-cats" class="manage-cats-btn">Gestionar categorías</button>
+    </main>
+
+    <!-- Category picker modal -->
+    <div id="cat-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Categoría</h2>
+                <button id="cat-modal-close" class="modal-close">&times;</button>
+            </div>
+            <div id="cat-list" class="cat-list"></div>
+        </div>
+    </div>
+
+    <!-- Category manager modal -->
+    <div id="cat-manager-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Categorías</h2>
+                <button id="cat-manager-close" class="modal-close">&times;</button>
+            </div>
+            <div id="cat-manager-list" class="cat-list"></div>
+            <div class="cat-editor">
+                <input id="cat-edit-name" type="text" placeholder="Nombre" maxlength="30">
+                <input id="cat-edit-color" type="color" value="#4A90D9">
+                <button id="cat-edit-save" class="cat-save-btn">Agregar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab bar -->
+    <nav class="tab-bar">
+        <button class="tab active" data-tab="timer">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 5V3M10 3h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span>Timer</span>
+        </button>
+        <button class="tab" data-tab="calendar">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 2v4M8 2v4M3 10h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span>Calendario</span>
+        </button>
+        <button class="tab" data-tab="stats">
+            <svg viewBox="0 0 24 24"><rect x="4" y="12" width="4" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><rect x="10" y="8" width="4" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><rect x="16" y="4" width="4" height="16" rx="1" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+            <span>Stats</span>
+        </button>
+    </nav>
+
+    <script src="app.js"></script>
+</body>
+</html>
