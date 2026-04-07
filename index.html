@@ -50,6 +50,19 @@
             <span id="cat-name">Sin categoría</span>
         </button>
 
+        <!-- Task checklist -->
+        <div class="tasks-section">
+            <div class="tasks-header">
+                <span class="tasks-title">Tareas</span>
+                <button id="btn-toggle-tasks" class="tasks-toggle">+</button>
+            </div>
+            <div id="tasks-input-row" class="tasks-input-row hidden">
+                <input id="task-input" type="text" placeholder="Nueva tarea..." maxlength="100">
+                <button id="btn-add-task" class="task-add-btn">Agregar</button>
+            </div>
+            <ul id="task-list" class="task-list"></ul>
+        </div>
+
         <!-- Controls -->
         <div class="controls">
             <button id="btn-stop" class="ctrl-btn ctrl-secondary hidden">
@@ -108,11 +121,46 @@
                 <span id="stat-sessions" class="stat-value">0</span>
                 <span class="stat-label">Sesiones</span>
             </div>
+            <div class="stat-card">
+                <span id="stat-mood" class="stat-value">—</span>
+                <span class="stat-label">Ánimo prom.</span>
+            </div>
         </div>
         <h3 class="section-title">Por categoría</h3>
         <div id="stats-breakdown" class="stats-breakdown"></div>
         <button id="btn-manage-cats" class="manage-cats-btn">Gestionar categorías</button>
+
+        <div class="export-section">
+            <button id="btn-export" class="export-btn">Exportar datos (JSON)</button>
+            <label id="btn-import" class="export-btn import-btn">
+                Importar datos
+                <input type="file" id="import-file" accept=".json" hidden>
+            </label>
+        </div>
     </main>
+
+    <!-- Mood rating modal -->
+    <div id="mood-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>¿Cómo te sentiste?</h2>
+            </div>
+            <p class="mood-subtitle">Valora tu sesión del 1 al 10</p>
+            <div id="mood-buttons" class="mood-buttons">
+                <button class="mood-btn" data-mood="1">1</button>
+                <button class="mood-btn" data-mood="2">2</button>
+                <button class="mood-btn" data-mood="3">3</button>
+                <button class="mood-btn" data-mood="4">4</button>
+                <button class="mood-btn" data-mood="5">5</button>
+                <button class="mood-btn" data-mood="6">6</button>
+                <button class="mood-btn" data-mood="7">7</button>
+                <button class="mood-btn" data-mood="8">8</button>
+                <button class="mood-btn" data-mood="9">9</button>
+                <button class="mood-btn" data-mood="10">10</button>
+            </div>
+            <button id="mood-skip" class="mood-skip">Omitir</button>
+        </div>
+    </div>
 
     <!-- Category picker modal -->
     <div id="cat-modal" class="modal hidden">

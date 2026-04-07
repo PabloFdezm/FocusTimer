@@ -474,6 +474,190 @@ body {
     cursor: pointer;
 }
 
+/* Export/Import */
+.export-section {
+    width: 100%;
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
+}
+.export-btn {
+    flex: 1;
+    padding: 14px;
+    background: var(--surface);
+    border: 1px solid var(--surface2);
+    color: var(--text);
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    text-align: center;
+}
+.import-btn { color: var(--text2); }
+.export-btn:active { opacity: 0.7; }
+
+/* Tasks */
+.tasks-section {
+    width: 100%;
+    max-width: 340px;
+    margin-bottom: 16px;
+}
+.tasks-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.tasks-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text2);
+}
+.tasks-toggle {
+    background: var(--surface);
+    border: none;
+    color: var(--text);
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+}
+.tasks-input-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+.tasks-input-row input {
+    flex: 1;
+    padding: 8px 10px;
+    background: var(--surface);
+    border: 1px solid var(--surface2);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13px;
+}
+.task-add-btn {
+    padding: 8px 12px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+}
+.task-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.task-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--surface);
+    border-radius: 8px;
+    font-size: 13px;
+}
+.task-item.done .task-text {
+    text-decoration: line-through;
+    color: var(--text2);
+}
+.task-check {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--text2);
+    background: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    font-size: 11px;
+}
+.task-item.done .task-check {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: white;
+}
+.task-text { flex: 1; }
+.task-delete {
+    background: none;
+    border: none;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 2px;
+}
+
+/* Mood rating */
+.mood-subtitle {
+    color: var(--text2);
+    font-size: 14px;
+    margin-bottom: 16px;
+    text-align: center;
+}
+.mood-buttons {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.mood-btn {
+    aspect-ratio: 1;
+    border: 2px solid var(--surface2);
+    border-radius: 12px;
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.mood-btn:active, .mood-btn.selected {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: white;
+}
+.mood-skip {
+    width: 100%;
+    padding: 12px;
+    background: none;
+    border: 1px solid var(--surface2);
+    border-radius: 10px;
+    color: var(--text2);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* Session mood/tasks in detail */
+.s-mood {
+    font-size: 11px;
+    color: var(--text2);
+}
+.s-tasks {
+    margin-top: 6px;
+    padding-left: 18px;
+    font-size: 12px;
+    color: var(--text2);
+}
+.s-tasks li { margin-bottom: 2px; }
+.s-tasks li.task-done { text-decoration: line-through; }
+.s-tasks li.task-pending { color: var(--text); }
+
+/* Stats mood average */
+.stat-mood {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
 .hidden { display: none !important; }
 
 .empty-msg {

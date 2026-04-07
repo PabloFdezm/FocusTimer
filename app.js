@@ -57,6 +57,9 @@ const state = {
     calMonth: new Date().getMonth(),
     // Stats
     statsPeriod: 'hoy',
+    // Tasks
+    tasks: [], // { id, text, done }
+    pendingSession: null, // session waiting for mood rating
 };
 
 const WORK = 25 * 60;
@@ -161,7 +164,7 @@ function stopTimer() {
     clearInterval(state.interval);
     state.interval = null;
 
-    // Save session if meaningful
+    // Build session if meaningful
     if (state.sessionStart) {
         let duration;
         if (state.mode === 'pomodoro') {
@@ -179,10 +182,11 @@ function stopTimer() {
                 duracion: duration,
                 modo: state.mode === 'pomodoro' ? 'pomodoro' : 'libre',
                 categoriaId: state.selectedCategory ? state.selectedCategory.id : null,
+                tareas: state.tasks.map(t => ({ text: t.text, done: t.done })),
+                animo: null,
             };
-            const sessions = loadSessions();
-            sessions.push(session);
-            saveSessions(sessions);
+            state.pendingSession = session;
+            showMoodModal();
         }
     }
 
@@ -215,7 +219,7 @@ function completeSegment() {
     clearInterval(state.interval);
     state.interval = null;
 
-    // Save work session
+    // Save work session — show mood modal
     if (state.pomodoroPhase === 'trabajo' && state.sessionStart) {
         const session = {
             id: uid(),
@@ -224,10 +228,11 @@ function completeSegment() {
             duracion: getPhaseDuration(),
             modo: 'pomodoro',
             categoriaId: state.selectedCategory ? state.selectedCategory.id : null,
+            tareas: state.tasks.map(t => ({ text: t.text, done: t.done })),
+            animo: null,
         };
-        const sessions = loadSessions();
-        sessions.push(session);
-        saveSessions(sessions);
+        state.pendingSession = session;
+        showMoodModal();
     }
 
     if (state.pomodoroPhase === 'trabajo') {
@@ -529,13 +534,28 @@ function showDayDetail(day) {
             const cat = s.categoriaId ? catMap[s.categoriaId] : null;
             const row = document.createElement('div');
             row.className = 'session-row';
+            row.style.flexWrap = 'wrap';
+
+            let moodStr = '';
+            if (s.animo != null) moodStr = `<span class="s-mood">Ánimo: ${s.animo}/10</span>`;
+
+            let tasksStr = '';
+            if (s.tareas && s.tareas.length > 0) {
+                const items = s.tareas.map(t =>
+                    `<li class="${t.done ? 'task-done' : 'task-pending'}">${t.text}</li>`
+                ).join('');
+                tasksStr = `<ul class="s-tasks">${items}</ul>`;
+            }
+
             row.innerHTML = `
                 <span class="s-dot" style="background:${cat ? cat.colorHex : '#888'}"></span>
                 <span class="s-name">${cat ? cat.nombre : 'Sin categoría'}</span>
                 <span class="s-info">
                     ${formatDuration(s.duracion)}
                     <span class="s-mode">${s.modo === 'pomodoro' ? 'Pomodoro' : 'Libre'}</span>
+                    ${moodStr}
                 </span>
+                ${tasksStr}
             `;
             container.appendChild(row);
         });
@@ -590,6 +610,15 @@ function renderStats() {
     $('#stat-time').textContent = formatDuration(totalSecs);
     $('#stat-sessions').textContent = filtered.length;
 
+    // Average mood
+    const withMood = filtered.filter(s => s.animo != null);
+    if (withMood.length > 0) {
+        const avg = withMood.reduce((sum, s) => sum + s.animo, 0) / withMood.length;
+        $('#stat-mood').textContent = avg.toFixed(1);
+    } else {
+        $('#stat-mood').textContent = '—';
+    }
+
     // Breakdown by category
     const breakdown = {};
     filtered.forEach(s => {
@@ -632,6 +661,134 @@ function renderStats() {
         container.appendChild(row);
     });
 }
+
+// ============================================================
+// EXPORT / IMPORT
+// ============================================================
+$('#btn-export').addEventListener('click', () => {
+    const data = {
+        sessions: loadSessions(),
+        categories: loadCategories(),
+        exportDate: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `focustimer-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+$('#import-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        try {
+            const data = JSON.parse(ev.target.result);
+            if (data.sessions) {
+                const existing = loadSessions();
+                const existingIds = new Set(existing.map(s => s.id));
+                const nuevas = data.sessions.filter(s => !existingIds.has(s.id));
+                saveSessions([...existing, ...nuevas]);
+            }
+            if (data.categories) {
+                const existing = loadCategories();
+                const existingIds = new Set(existing.map(c => c.id));
+                const nuevas = data.categories.filter(c => !existingIds.has(c.id));
+                saveCategories([...existing, ...nuevas]);
+            }
+            alert(`Importados: ${data.sessions?.length || 0} sesiones`);
+            renderStats();
+        } catch {
+            alert('Error al leer el archivo');
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+});
+
+// ============================================================
+// TASK CHECKLIST
+// ============================================================
+$('#btn-toggle-tasks').addEventListener('click', () => {
+    const row = $('#tasks-input-row');
+    row.classList.toggle('hidden');
+    if (!row.classList.contains('hidden')) $('#task-input').focus();
+});
+
+$('#btn-add-task').addEventListener('click', addTask);
+$('#task-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addTask();
+});
+
+function addTask() {
+    const input = $('#task-input');
+    const text = input.value.trim();
+    if (!text) return;
+    state.tasks.push({ id: uid(), text, done: false });
+    input.value = '';
+    renderTasks();
+}
+
+function renderTasks() {
+    const list = $('#task-list');
+    list.innerHTML = '';
+    state.tasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = 'task-item' + (task.done ? ' done' : '');
+        li.innerHTML = `
+            <button class="task-check" data-id="${task.id}">${task.done ? '✓' : ''}</button>
+            <span class="task-text">${task.text}</span>
+            <button class="task-delete" data-id="${task.id}">&times;</button>
+        `;
+        list.appendChild(li);
+    });
+
+    list.querySelectorAll('.task-check').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const t = state.tasks.find(t => t.id === btn.dataset.id);
+            if (t) { t.done = !t.done; renderTasks(); }
+        });
+    });
+    list.querySelectorAll('.task-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+            state.tasks = state.tasks.filter(t => t.id !== btn.dataset.id);
+            renderTasks();
+        });
+    });
+}
+
+// ============================================================
+// MOOD RATING
+// ============================================================
+function showMoodModal() {
+    $$('.mood-btn').forEach(b => b.classList.remove('selected'));
+    $('#mood-modal').classList.remove('hidden');
+}
+
+function saveSessionWithMood(mood) {
+    if (!state.pendingSession) return;
+    state.pendingSession.animo = mood;
+    const sessions = loadSessions();
+    sessions.push(state.pendingSession);
+    saveSessions(sessions);
+    state.pendingSession = null;
+    state.tasks = [];
+    renderTasks();
+    $('#mood-modal').classList.add('hidden');
+}
+
+$$('.mood-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        saveSessionWithMood(parseInt(btn.dataset.mood));
+    });
+});
+
+$('#mood-skip').addEventListener('click', () => {
+    saveSessionWithMood(null);
+});
 
 // ============================================================
 // INIT
